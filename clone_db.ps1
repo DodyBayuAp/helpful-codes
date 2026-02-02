@@ -33,15 +33,25 @@ catch {
     exit 1
 }
 
+# Set MySQL password as environment variable to avoid interactive prompt
+$env:MYSQL_PWD = $Password
+
 # Verify source database exists
 Write-Host "Verifying source database exists..." -ForegroundColor Yellow
 $checkDbQuery = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$DbSource';"
 try {
-    $dbExists = & mysql -u $User -p"$Password" -e $checkDbQuery -s --skip-column-names 2>&1
+    $dbExists = & mysql -u $User -e $checkDbQuery -s --skip-column-names 2>&1
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "[Error] Failed to connect to MySQL server" -ForegroundColor Red
-        Write-Host "Please check your credentials and MySQL server status" -ForegroundColor Yellow
-        Write-Host "Error: $dbExists" -ForegroundColor Red
+        # Check if it's an authentication error
+        if ($dbExists -match "Access denied" -or $dbExists -match "ERROR 1045") {
+            Write-Host "[Error] Authentication failed - Wrong username or password!" -ForegroundColor Red
+            Write-Host "Please check your MySQL credentials" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "[Error] Failed to connect to MySQL server" -ForegroundColor Red
+            Write-Host "Please check your MySQL server status" -ForegroundColor Yellow
+        }
+        Write-Host "Error details: $dbExists" -ForegroundColor Red
         exit 1
     }
     
@@ -51,7 +61,7 @@ try {
         # List available databases to help user
         Write-Host "`nAvailable databases:" -ForegroundColor Yellow
         $listDbQuery = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys');"
-        $availableDbs = & mysql -u $User -p"$Password" -e $listDbQuery -s --skip-column-names 2>&1
+        $availableDbs = & mysql -u $User -e $listDbQuery -s --skip-column-names 2>&1
         
         if ($LASTEXITCODE -eq 0 -and ![string]::IsNullOrWhiteSpace($availableDbs)) {
             $availableDbs -split "`n" | Where-Object { $_.Trim() -ne "" } | ForEach-Object {
@@ -76,7 +86,7 @@ catch {
 Write-Host "Calculating database size..." -ForegroundColor Yellow
 $sizeQuery = "SELECT COALESCE(SUM(data_length + index_length), 0) FROM information_schema.TABLES WHERE table_schema='$DbSource';"
 try {
-    $sizeBytes = & mysql -u $User -p"$Password" -e $sizeQuery -s --skip-column-names 2>&1
+    $sizeBytes = & mysql -u $User -e $sizeQuery -s --skip-column-names 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[Error] Failed to connect to MySQL or query database size" -ForegroundColor Red
         Write-Host "Error: $sizeBytes" -ForegroundColor Red
@@ -93,7 +103,7 @@ catch {
 # Create target database
 Write-Host "Creating target database..." -ForegroundColor Yellow
 try {
-    $createDb = & mysql -u $User -p"$Password" -e "CREATE DATABASE IF NOT EXISTS ``$DbTarget``;" 2>&1
+    $createDb = & mysql -u $User -e "CREATE DATABASE IF NOT EXISTS ``$DbTarget``;" 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[Error] Failed to create target database" -ForegroundColor Red
         Write-Host "Error: $createDb" -ForegroundColor Red
@@ -113,7 +123,7 @@ $tempFile = [System.IO.Path]::GetTempFileName()
 try {
     # Export database
     Show-Progress -Activity "Database Clone" -PercentComplete 10 -Status "Exporting source database..."
-    $dumpResult = & mysqldump -u $User -p"$Password" --routines --triggers --events --opt $DbSource 2>&1
+    $dumpResult = & mysqldump -u $User --routines --triggers --events --opt $DbSource 2>&1
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[Error] Failed to dump source database" -ForegroundColor Red
@@ -127,7 +137,7 @@ try {
     
     # Import to target database
     Show-Progress -Activity "Database Clone" -PercentComplete 75 -Status "Importing to target database..."
-    $importResult = Get-Content $tempFile | & mysql -u $User -p"$Password" $DbTarget 2>&1
+    $importResult = Get-Content $tempFile | & mysql -u $User $DbTarget 2>&1
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[Error] Failed to import to target database" -ForegroundColor Red
@@ -155,6 +165,7 @@ finally {
 
 # Clear password from memory
 $Password = $null
+$env:MYSQL_PWD = $null
 [System.GC]::Collect()
 
 Write-Host "`nClone operation completed at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Gray

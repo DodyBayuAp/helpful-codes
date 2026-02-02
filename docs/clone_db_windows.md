@@ -6,12 +6,13 @@ A PowerShell script to clone MySQL/MariaDB databases on Windows with progress tr
 
 - **Interactive Input**: Prompts for MySQL credentials and database names
 - **Secure Password Entry**: Password input is hidden using SecureString
+- **Smart Error Handling**: Distinguishes between bad passwords and connection errors
+- **Database Verification**: Verifies source DB exists and lists available ones if not found
 - **Progress Tracking**: Visual progress bar showing clone status
 - **Size Calculation**: Displays database size before cloning
 - **Complete Clone**: Copies all data, routines, triggers, and events
-- **Error Handling**: Comprehensive error checking with clear messages
 - **Safe Operation**: Creates target database if it doesn't exist
-- **Memory Security**: Clears password from memory after use
+- **Memory Security**: Clears password from memory and environment variables after use
 
 ## 🔧 Dependencies
 
@@ -101,6 +102,8 @@ Source Database Name: production_db
 Target Database Name: development_db
 
 --- Starting Clone: production_db -> development_db ---
+Verifying source database exists...
+Source database verified: production_db
 Calculating database size...
 Database size: 1250.45 MB
 Creating target database...
@@ -128,10 +131,13 @@ Clone operation completed at 2026-02-03 01:30:45
 
 ## 🔐 Security Considerations
 
-- **SecureString**: Password is stored as SecureString during input
-- **Memory Cleanup**: Password is cleared from memory after use
-- **Temp Files**: Temporary dump files are automatically deleted
-- **Error Messages**: Sensitive information is not exposed in error messages
+## 🔐 Security Considerations
+
+- **Secure Input**: Password is read as a SecureString to prevent it from being potentially logged or exposed during input.
+- **Process Security**: The script uses the process-scoped `MYSQL_PWD` environment variable to authenticate with MySQL commands. This avoids passing the password as a command-line argument and prevents interactive prompts.
+- **Cleanup**: The `MYSQL_PWD` environment variable and password variables are explicitly cleared from memory immediately after the operation completes.
+- **Temp Files**: Temporary dump files are automatically deleted.
+- **Error Messages**: Sensitive information is not exposed in error messages.
 
 ### Best Practices
 

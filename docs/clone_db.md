@@ -6,11 +6,12 @@ A simple yet powerful bash script to clone MySQL/MariaDB databases with real-tim
 
 - **Interactive Input**: Prompts for MySQL credentials and database names
 - **Secure Password Entry**: Password input is hidden for security
+- **Smart Error Handling**: Distinguishes between bad passwords and connection errors
+- **Database Verification**: Verifies source DB exists and lists available ones if not found
 - **Progress Bar**: Real-time progress tracking using `pv` (Pipe Viewer)
 - **Size Estimation**: Automatically calculates database size for accurate progress display
 - **Complete Clone**: Copies all data, routines, triggers, and events
-- **Error Handling**: Provides clear success/failure messages
-- **Safe Operation**: Creates target database if it doesn't exist
+- **Safe Operation**: Validates inputs before starting and creates target database safely
 
 ## 🔧 Dependencies
 
@@ -92,9 +93,20 @@ Source Database Name: production_db
 Target Database Name: development_db
 
 --- Starting Clone: production_db -> development_db ---
-Transfer Data: 1.2GiB 0:02:15 [8.9MiB/s] [===============>] 100%
+Verifying source database exists...
+Source database verified: production_db
+Calculating database size...
+Database size: 125.50 MB
+Creating target database...
+Target database created successfully
+
+Cloning database...
+Transfer Data: 125MB 0:00:15 [8.9MiB/s] [===============>] 100%
 
 [Success] Database cloned successfully!
+Source: production_db -> Target: development_db
+
+Clone operation completed at 2026-02-03 10:30:45
 ```
 
 ## ⚙️ How It Works
@@ -108,7 +120,7 @@ Transfer Data: 1.2GiB 0:02:15 [8.9MiB/s] [===============>] 100%
 
 ## 🔐 Security Considerations
 
-- **Password Visibility**: While the script uses `-s` flag to hide password input, the password is passed via command-line arguments to MySQL commands. For production use, consider using MySQL configuration files (`~/.my.cnf`) instead.
+- **Password Handling**: The script uses the `MYSQL_PWD` environment variable to pass credentials to MySQL commands. This prevents the password from appearing in the process list (ps) as a command-line argument, which is a significant security improvement over standard usage.
 - **Permissions**: Ensure the script has appropriate file permissions (e.g., `chmod 700`) to prevent unauthorized access.
 - **Network**: If cloning across networks, ensure secure connections (SSL/TLS).
 
