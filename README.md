@@ -10,10 +10,12 @@ This repository contains a growing collection of standalone scripts designed to 
 
 ### Database & Data Management
 
-| Tool                               | Description                                                    | Platform    | Documentation                              |
-| ---------------------------------- | -------------------------------------------------------------- | ----------- | ------------------------------------------ |
-| **[clone_db.sh](./clone_db.sh)**   | Clone MySQL/MariaDB databases with real-time progress tracking | Linux/macOS | [📖 View Docs](./docs/clone_db.md)         |
-| **[clone_db.ps1](./clone_db.ps1)** | Clone MySQL/MariaDB databases with progress tracking           | Windows     | [📖 View Docs](./docs/clone_db_windows.md) |
+| Tool                                   | Description                                                    | Platform    | Documentation                                |
+| -------------------------------------- | -------------------------------------------------------------- | ----------- | -------------------------------------------- |
+| **[clone_db.sh](./clone_db.sh)**       | Clone MySQL/MariaDB databases with real-time progress tracking | Linux/macOS | [📖 View Docs](./docs/clone_db.md)           |
+| **[clone_db.ps1](./clone_db.ps1)**     | Clone MySQL/MariaDB databases with progress tracking           | Windows     | [📖 View Docs](./docs/clone_db_windows.md)   |
+| **[copy_table.sh](./copy_table.sh)**   | Copy a specific table between MySQL/MariaDB databases          | Linux/macOS | [📖 View Docs](./docs/copy_table.md)         |
+| **[copy_table.ps1](./copy_table.ps1)** | Copy a specific table between MySQL/MariaDB databases          | Windows     | [📖 View Docs](./docs/copy_table_windows.md) |
 
 ## 🚀 Quick Start
 
